@@ -1,0 +1,145 @@
+<script src="https://unpkg.com/tiny-markdown-editor/dist/tiny-mde.min.js"></script>
+<link rel="stylesheet" type="text/css" href="https://unpkg.com/tiny-markdown-editor/dist/tiny-mde.min.css" />
+
+<main id="note-editor">
+    <div class="page-header shadow-sm sticky-top">
+        <div class="container-xl">
+            <div class="d-flex align-items-center justify-content-between">
+                <h1 tabindex="0" class="app-page-title m-0">Note Editor</h1>
+            </div>
+        </div>
+    </div>
+
+    <div class="content pt-3 p-md-3 p-lg-4">
+        <div class="card page-card">
+            <div class="card-header">
+                <!-- Nav tabs -->
+                <ul class="nav nav-tabs nav-fill" id="myTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab" aria-controls="overview" aria-selected="true">Overview</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="background-tab" data-bs-toggle="tab" data-bs-target="#background" type="button" role="tab" aria-controls="background" aria-selected="false">Background</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="personality-tab" data-bs-toggle="tab" data-bs-target="#personality" type="button" role="tab" aria-controls="personality" aria-selected="false">Personality</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="relationships-tab" data-bs-toggle="tab" data-bs-target="#relationships" type="button" role="tab" aria-controls="relationships" aria-selected="false">Relationships</button>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card-body">
+                <!-- Tab panes -->
+                <div class="tab-content">
+                    <div class="tab-pane active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+                        <div class="row">
+                            <div class="col-sm-4 col-12">
+                                <div class="card highlight">
+                                    <div class="card-header">Basic Information</div>
+                                    <div class="card-body">
+                                        <div class="form-group mb-3">
+                                            <label for="characterName" class="form-label">Name:</label>
+                                            <input type="text" class="form-control" id="characterName" />
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="characterRace" class="form-label">Race:</label>
+                                            <input type="text" class="form-control" id="characterRace" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-8 col-12">
+                                <div class="card highlight">
+                                    <div class="card-header">Classes & Abilities</div>
+                                    <div class="card-body">
+                                        <div id="classInput">
+                                            <div class="row mb-3 position-relative" style="padding-right: 30px">
+                                                <div class="col-md-4">
+                                                    <label for="className" class="form-label">Class:</label>
+                                                    <input type="text" class="form-control" />
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label for="classLevel" class="form-label">Level:</label>
+                                                    <input type="number" class="form-control" />
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label for="classSubclass" class="form-label">Subclass:</label>
+                                                    <input type="text" class="form-control" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button id="add-class-btn" class="btn btn-secondary">Add Class</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane" id="background" role="tabpanel" aria-labelledby="background-tab">
+                        <div id="tinymde_commandbar1"></div>
+                        <div id="tinymde1" style="height:300px; overflow-y:scroll; border:1px solid #c0c0c0"></div>
+                    </div>
+                    <div class="tab-pane" id="personality" role="tabpanel" aria-labelledby="personality-tab">
+                        <!-- Personality content goes here, character's traits, quirks, beliefs, etc. -->
+                    </div>
+                    <div class="tab-pane" id="relationships" role="tabpanel" aria-labelledby="relationships-tab">
+                        <!-- Relationships content goes here, character's connections with other NPCs or party members -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<button id="save-button">
+    <i class="bx bxs-save"></i>
+</button>
+
+<script type="module">
+    const addClassBtn = document.getElementById('add-class-btn');
+
+    setupListeners();
+
+    function setupListeners() {
+        addClassBtn.addEventListener('click', addClass);
+    }
+
+    function addClass() {
+        let classInput = document.getElementById('classInput');
+
+        let classRow = document.createElement('div');
+        classRow.classList.add('row', 'mb-3', 'position-relative');
+        classRow.style.paddingRight = '30px';
+
+        classRow.innerHTML = `
+            <div class="col-md-4">
+                <label for="className" class="form-label">Class:</label>
+                <input type="text" class="form-control" />
+            </div>
+            <div class="col-md-4">
+                <label for="classLevel" class="form-label">Level:</label>
+                <input type="number" class="form-control" />
+            </div>
+            <div class="col-md-4">
+                <label for="classSubclass" class="form-label">Subclass:</label>
+                <input type="text" class="form-control" />
+            </div>
+            <div class="delete-btn" style="position: absolute; right: 6px; width: 30px; padding: 0; bottom: 4px; text-align: center; cursor: pointer;">
+                <span style="font-weight: 600; color: red; font-size: 20px" aria-hidden="true">&times;</span>
+            </div>
+        `;
+
+        classInput.appendChild(classRow);
+
+        let deleteBtn = classRow.querySelector('.delete-btn');
+        deleteBtn.addEventListener('click', function () {
+            classInput.removeChild(classRow);
+        });
+
+        let tinyMDE1 = new TinyMDE.Editor({element: 'tinymde1'});
+        let commandBar1 = new TinyMDE.CommandBar({element: 'tinymde_commandbar1', editor: tinyMDE1});
+    }
+</script>

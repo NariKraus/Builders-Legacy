@@ -1,0 +1,120 @@
+    <div class="stars"></div>
+    <div>
+        <svg id="moon" viewBox="-6 -6 12 12" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <filter id="filter2">
+                    <feTurbulence id="turbulence" type="fractalNoise" baseFrequency=".02" numOctaves="10" />
+                    <feDisplacementMap in="SourceGraphic" scale="250" />
+                </filter>
+                <filter id="moon-blur-filter">
+                    <feGaussianBlur stdDeviation="0.3"></feGaussianBlur>
+                </filter>
+                <filter id="moon-inset-shadow">
+                    <!-- Shadow offset-->
+                    <feOffset dx="0" dy="0"></feOffset>
+                    <!-- Shadow blur-->
+                    <feGaussianBlur stdDeviation="1" result="offset-blur"></feGaussianBlur>
+                    <!-- Invert drop shadow to make an inset shadow-->
+                    <feComposite operator="out" in="SourceGraphic" in2="offset-blur" result="inverse"></feComposite>
+                    <!-- Cut color inside shadow-->
+                    <feFlood flood-color="#4b617d" flood-opacity="1" result="color"></feFlood>
+                    <feComposite operator="in" in="color" in2="inverse" result="shadow"></feComposite>
+                    <!-- Placing shadow over element-->
+                    <feComposite operator="over" in="shadow" in2="SourceGraphic"></feComposite>
+                </filter>
+                <pattern id="image" patternUnits="userSpaceOnUse" height="200" width="200" x="-5" y="-5">
+                    <image width="10" height="10" xlink:href="https://i.pinimg.com/736x/6e/29/ea/6e29ea6155cb423688d3db7a1a13465d.jpg"></image>
+                </pattern>
+            </defs>
+            <g fill="url(#image)">
+                <circle r="5"></circle>
+            </g>
+        </svg>
+    </div>
+
+    <script defer>
+        const starCount = 200;
+        const starsContainer = document.querySelector('.stars');
+    
+        for (let i = 1; i <= starCount; i++) {
+            const star = document.createElement('div');
+            star.classList.add('star');
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            star.style.animationDelay = Math.random() * 8 + 's';
+            star.style.scale = Math.round(Math.random() * 100) / 200 + 0.75;
+            starsContainer.appendChild(star);
+        }
+    
+        let moon;
+    
+        let moonEl = document.getElementById('moon');
+        const originalMoon = moonEl.outerHTML + '';
+    
+        function resetMoonSVG() {
+            moonEl = document.getElementById('moon');
+    
+            moonEl.outerHTML = originalMoon;
+    
+            moon = Snap('#moon');
+    
+            return moon;
+        }
+    
+        function makeMoonSVG(phase) {
+            moon = resetMoonSVG(moon);
+    
+            moon.select('g').attr({ filter: 'url(#moon-inset-shadow)', mask: '', transform: '' });
+    
+            if (phase === 0.5) {
+            } else if (phase <= 0.25 || phase >= 0.75) {
+                let phasex;
+                if (phase <= 0.25) {
+                    phasex = phase;
+                } else {
+                    phasex = 1 - phase;
+                }
+    
+                let cx = (18 * phasex) / (1.01 - 4 * phasex);
+                let r = cx + 6 / (Math.pow(cx, 1.25) / 6 + 6 / 6);
+                let r_mask = moon.rect(-5, -5, 10, 10).attr({ fill: 'white' });
+                let c_mask = moon.circle(cx, 0, r).attr({ fill: 'black', filter: 'url(#moon-blur-filter)' });
+                let g_mask = moon.group(r_mask, c_mask);
+    
+                let g = moon.select('g');
+                if (phase <= 0.25) {
+                    g.attr({ mask: g_mask });
+                    moon.select('g circle').attr({ transform: 'scale(-1,1)' });
+                } else {
+                    g.attr({ mask: g_mask });
+                }
+            } else {
+                let phasex;
+                if (phase <= 0.5) {
+                    phasex = -phase + 0.5;
+                } else {
+                    phasex = phase - 0.5;
+                }
+                let cx = (18 * phasex) / (1.01 - 4 * phasex);
+                let r = cx + 6 / (Math.pow(cx, 1.25) / 6 + 6 / 6);
+                let c_mask = moon.circle(0, 0, 5).attr({ fill: 'black' });
+                let c_mask1 = phase <= 0.5 ? moon.circle(cx, 0, r).attr({ fill: 'white', filter: 'url(#moon-blur-filter)' }) : moon.circle(-cx, 0, r).attr({ fill: 'white', filter: 'url(#moon-blur-filter)' });
+                let g_mask = moon.group(c_mask, c_mask1);
+    
+                let g = moon.select('g');
+                if (phase <= 0.5) {
+                    g.attr({ mask: g_mask });
+                } else {
+                    g.attr({ mask: g_mask });
+                    // moon.select('g circle').attr({ transform: 'scale(1,1)' });
+                }
+            }
+    
+            return moon;
+        }
+    
+        makeMoonSVG(localStorage.moonValue || 0.1);
+    </script>
+
+    </body>
+</html>

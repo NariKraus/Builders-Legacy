@@ -1,0 +1,47 @@
+@use 'sass:color';
+
+$moon-white: #f0f0f0;
+$moon-grey: #cccccc;
+$moon-dark-grey: #666666;
+
+$sky-blue: #007bff;
+$sky-light-blue: #66b3ff;
+
+$star-yellow: #ffff99;
+$star-pink: #ffcccc;
+$star-purple: #cc99ff;
+$star-red: #ff9999;
+$star-blue: #99ccff;
+$star-white: #ffffff;
+
+$eclipse-black: #000000;
+$eclipse-red: #d41010;
+
+$space-black: #111111;
+$space-dark-blue: #0a0e3f;
+
+// $primary: #11101d;
+$primary: #1b192d;
+$secondary: color.adjust($primary, $lightness: 15%);
+// $secondary: #1d1b31;
+
+:root {
+    --moon-white: #{$moon-white};
+    --moon-grey: #{$moon-grey};
+    --moon-dark-grey: #{$moon-dark-grey};
+
+    --sky-blue: #{$sky-blue};
+    --sky-light-blue: #{$sky-light-blue};
+
+    --star-yellow: #{$star-yellow};
+    --star-white: #{$star-white};
+
+    --eclipse-black: #{$eclipse-black};
+    --eclipse-red: #{$eclipse-red};
+
+    --space-black: #{$space-black};
+    --space-dark-blue: #{$space-dark-blue};
+
+    --primary: #{$primary};
+    --secondary: #{$secondary};
+}

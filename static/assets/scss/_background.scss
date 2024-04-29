@@ -1,0 +1,57 @@
+.stars {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: -1;
+}
+
+.star {
+    position: fixed;
+    width: 0;
+    height: 0;
+    background-color: #0000;
+    border-radius: 50%;
+    animation: twinkle infinite;
+    animation-duration: (8 + random(8)) + s;
+
+    $starColours: $star-white, $star-yellow, $star-pink, $star-purple, $star-red, $star-blue;
+
+    @for $i from 1 through length($starColours) {
+        &:nth-child(#{length($starColours)}n + #{$i}) {
+            $star-color: nth($starColours, $i);
+            --star-color: #{$star-color};
+        }
+    }
+
+    box-shadow: 0 0 2px 1px var(--star-color);
+
+    @keyframes twinkle {
+        0% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0;
+        }
+        100% {
+            opacity: 1;
+        }
+    }
+}
+
+#moon {
+    position: fixed;
+    top: 60px;
+    right: 30px;
+    height: 200px;
+    z-index: -1;
+    color: #ccdbef;
+    filter: drop-shadow(0 0 10vmin #a1bbed);
+
+    @media screen and (max-width: 640px) {
+        & {
+            display: none;
+        }
+    }
+}

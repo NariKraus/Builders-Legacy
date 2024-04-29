@@ -1,0 +1,19 @@
+<div class="container-xl py-4">
+    <div id="row" class="row gap-4 justify-content-center"></div>
+</div>
+
+<script type="module">
+    const searchParams = new URLSearchParams(window.location.search);
+    const nameParam = searchParams.get('name');
+
+    const row = document.getElementById('row');
+
+    callService('/content/getPCs/' + nameParam, 'GET', (res, xhr) => {
+        const formattedJSON = JSON.stringify(res, null, 4); 
+
+        const preElement = document.createElement('pre');
+        preElement.textContent = formattedJSON;
+
+        row.appendChild(preElement);
+    });
+</script>

@@ -1,0 +1,39 @@
+<main>
+    <div class="page-header shadow-sm sticky-top">
+        <div class="container-xl">
+            <div class="d-flex align-items-center justify-content-between">
+                <h1 tabindex="0" class="app-page-title m-0">Home</h1>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script type="module">
+    const row = document.getElementById('row');
+
+    callService('/content/getPCs/all', 'GET', (res, xhr) => {
+        res.forEach((character) => {
+            row.append(generateCharacterCard(character));
+        });
+    });
+
+    function generateCharacterCard(character) {
+        return htmlToElement(`
+            <div class="col-5">
+                <div class="card">
+                    <div class="card-header text-center bg-secondary text-light">
+                        <h5 class="card-title mb-2">${character.name}</h5>
+                        <h6 class="card-subtitle m-0" style="font-weight: 400; opacity: 0.5">${character.message}</h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text">
+                            <b>Race: </b> ${character.race}
+                            <br />
+                            <b>Class${character.classes.length > 1 ? 'es' : ''}: </b> ${character.classes.map((Class) => `${Class.name} - ${Class.level}`).join('; ')}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        `);
+    }
+</script>
