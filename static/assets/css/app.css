@@ -291,7 +291,7 @@
   background-color: rgba(0, 0, 0, 0);
   border-radius: 50%;
   animation: twinkle infinite;
-  animation-duration: 13s;
+  animation-duration: 14s;
   box-shadow: 0 0 2px 1px var(--star-color);
 }
 .star:nth-child(6n+1) {
@@ -514,6 +514,23 @@ textarea {
 }
 #save-button:active {
   scale: 0.9;
+}
+
+.editor-toolbar {
+  border: none !important;
+  color: #f0f0f0 !important;
+  background-color: #39345e !important;
+}
+.editor-toolbar button {
+  border: none !important;
+  color: #f0f0f0 !important;
+}
+.editor-toolbar button.active, .editor-toolbar button:hover {
+  background-color: #1b192d !important;
+}
+.CodeMirror,
+.editor-preview {
+  border: none !important;
 }
 
 #note-editor #input-container {

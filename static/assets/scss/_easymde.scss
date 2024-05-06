@@ -1,0 +1,23 @@
+.editor-toolbar {
+    border: none !important;
+    color: $moon-white !important;
+    background-color: $secondary !important;
+
+    button {
+        border: none !important;
+        color: $moon-white !important;
+
+        &.active,
+        &:hover {
+            background-color: $primary !important;
+        }
+
+        .fa {
+        }
+    }
+}
+
+.CodeMirror,
+.editor-preview {
+    border: none !important;
+}

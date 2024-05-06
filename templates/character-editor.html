@@ -1,0 +1,236 @@
+<link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css" />
+<script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
+
+<main id="note-editor">
+    <div class="page-header shadow-sm sticky-top">
+        <div class="container-xl">
+            <div class="d-flex align-items-center justify-content-between">
+                <h1 tabindex="0" class="app-page-title m-0">Character Editor</h1>
+            </div>
+        </div>
+    </div>
+
+    <div class="content pt-3 p-md-3 p-lg-4">
+        <div class="card page-card">
+            <div class="card-header">
+                <!-- Nav tabs -->
+                <ul class="nav nav-tabs nav-fill" id="myTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab" aria-controls="overview" aria-selected="true">Overview</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="backstory-tab" data-bs-toggle="tab" data-bs-target="#backstory" type="button" role="tab" aria-controls="backstory" aria-selected="false">backstory</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="personality-tab" data-bs-toggle="tab" data-bs-target="#personality" type="button" role="tab" aria-controls="personality" aria-selected="false">Personality</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="relationships-tab" data-bs-toggle="tab" data-bs-target="#relationships" type="button" role="tab" aria-controls="relationships" aria-selected="false">Relationships</button>
+                    </li>
+                </ul>
+            </div>
+
+            <div class="card-body">
+                <!-- Tab panes -->
+                <div class="tab-content">
+                    <div class="tab-pane active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
+                        <div class="row">
+                            <div class="col-sm-4 col-12">
+                                <div class="card highlight">
+                                    <div class="card-header">Basic Information</div>
+                                    <div class="card-body">
+                                        <div class="form-group mb-3">
+                                            <label for="character-name" class="form-label">Name:</label>
+                                            <input type="text" class="form-control" id="character-name" />
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="character-race" class="form-label">Race:</label>
+                                            <input type="text" class="form-control" id="character-race" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-8 col-12">
+                                <div class="card highlight">
+                                    <div class="card-header">Classes & Abilities</div>
+                                    <div class="card-body">
+                                        <div id="classInput">
+                                            <div class="row mb-3 position-relative" style="padding-right: 30px">
+                                                <div class="col-md-4">
+                                                    <label for="class-name" class="form-label">Class:</label>
+                                                    <select id="class-name" class="form-control form-select">
+                                                        <option value="" selected hidden></option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label for="class-level" class="form-label">Level:</label>
+                                                    <input id="class-level" type="number" class="form-control" />
+                                                </div>
+                                                <div class="col-md-4">
+                                                    <label for="class-subclass" class="form-label">Subclass:</label>
+                                                    <select id="class-subclass" class="form-control form-select">
+                                                        <option value="" selected hidden></option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button id="add-class-btn" class="btn btn-secondary">Add Class</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane" id="backstory" role="tabpanel" aria-labelledby="backstory-tab">
+                        <textarea id="character-backstory"></textarea>
+                    </div>
+                    <div class="tab-pane" id="personality" role="tabpanel" aria-labelledby="personality-tab">
+                        <textarea id="character-personality"></textarea>
+                    </div>
+                    <div class="tab-pane" id="relationships" role="tabpanel" aria-labelledby="relationships-tab">
+                        <!-- Relationships content goes here, character's connections with other NPCs or party members -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<section>
+    <option value=""></option>
+</section>
+
+<button id="save-button">
+    <i class="bx bxs-save"></i>
+</button>
+
+<script type="module">
+    const addClassBtn = document.getElementById('add-class-btn');
+
+    const MDE_Instances = {};
+
+    let classes, classRowClone;
+    const classSelect = document.getElementById('class-name');
+    const levelSelect = document.getElementById('class-level');
+    const subclassSelect = document.getElementById('class-subclass');
+
+    setupPage();
+
+    function setupPage() {
+        callService('/classes/getClasses/', 'GET', (res, xhr) => {
+            classes = res;
+
+            classes.forEach((item) => {
+                const option = document.createElement('option');
+                option.value = option.innerHTML = item.name;
+
+                classSelect.appendChild(option);
+            });
+        });
+
+        setupListeners();
+        setupMDEs();
+    }
+
+    function setupListeners() {
+        // Class Features
+        classSelect.addEventListener('change', getSubclasses);
+
+        function getSubclasses(e) {
+            subclassSelect.innerHTML = '<option value="" selected hidden></option>';
+            subclassSelect.value = '';
+            e.target.value;
+        }
+
+        addClassBtn.addEventListener('click', addClass);
+
+        function addClass() {
+            let classInput = document.getElementById('classInput');
+
+            let classRow = document.createElement('div');
+            classRow.classList.add('row', 'mb-3', 'position-relative');
+            classRow.style.paddingRight = '30px';
+
+            classRow.innerHTML = `
+            <div class="col-md-4">
+                <label for="class-name" class="form-label">Class:</label>
+                <input id="class-name" type="text" class="form-control" />
+            </div>
+            <div class="col-md-4">
+                <label for="class-level" class="form-label">Level:</label>
+                <input id="class-level" type="number" class="form-control" />
+            </div>
+            <div class="col-md-4">
+                <label for="class-subclass" class="form-label">Subclass:</label>
+                <input id="class-subclass" type="text" class="form-control" />
+            </div>
+            <div class="delete-btn" style="position: absolute; right: 6px; width: 30px; padding: 0; bottom: 4px; text-align: center; cursor: pointer;">
+                <span style="font-weight: 600; color: red; font-size: 20px" aria-hidden="true">&times;</span>
+            </div>
+        `;
+
+            classInput.appendChild(classRow);
+
+            let deleteBtn = classRow.querySelector('.delete-btn');
+            deleteBtn.addEventListener('click', function () {
+                classInput.removeChild(classRow);
+            });
+        }
+    }
+
+    function setupMDEs() {
+        MDE_Instances.backstory = new EasyMDE({
+            element: document.getElementById('character-backstory'),
+            spellChecker: true, // Disable spell checker
+            autosave: {
+                enabled: false,
+            },
+            toolbar: ['bold', 'italic', 'strikethrough', '|', 'heading-1', 'heading-2', 'heading-3', '|', 'quote', 'unordered-list', 'horizontal-rule', '|', 'preview', 'guide'], // Customize toolbar buttons
+        });
+        MDE_Instances.personality = new EasyMDE({
+            element: document.getElementById('character-personality'),
+            spellChecker: true, // Disable spell checker
+            autosave: {
+                enabled: false,
+            },
+            toolbar: ['bold', 'italic', 'strikethrough', '|', 'heading-1', 'heading-2', 'heading-3', '|', 'quote', 'unordered-list', 'horizontal-rule', '|', 'preview', 'guide'], // Customize toolbar buttons
+        });
+    }
+
+    function generateJSON() {
+        const name = document.getElementById('character-name');
+        const race = document.getElementById('character-race');
+
+        const classRows = document.querySelectorAll('#classInput .row');
+        const classObjects = [];
+
+        classRows.forEach((row) => {
+            // Extract values from the row
+            const className = row.querySelector('[id^="class-name"]').value;
+            const classLevel = row.querySelector('[id^="class-level"]').value;
+            const classSubclass = row.querySelector('[id^="class-subclass"]').value;
+
+            // Create object with extracted values and push to array
+            const classObject = {
+                name: className,
+                level: classLevel,
+                subclass: classSubclass,
+            };
+
+            if (className || classLevel || classSubclass) classObjects.push(classObject);
+        });
+
+        const JSON = {
+            name: name.value,
+            race: race.value,
+            classes: classObjects,
+        };
+
+        return JSON;
+    }
+
+    window.x = () => {
+        console.log(generateJSON());
+    };
+</script>
