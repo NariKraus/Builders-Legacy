@@ -1,5 +1,5 @@
-<link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css" />
-<script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
+<!-- <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css" />
+<script src="https://unpkg.com/easymde/dist/easymde.min.js"></script> -->
 
 <main id="note-editor">
     <div class="page-header shadow-sm sticky-top">
@@ -11,86 +11,25 @@
     </div>
 
     <div class="content pt-3 p-md-3 p-lg-4">
-        <div class="card page-card">
-            <div class="card-header">
-                <!-- Nav tabs -->
-                <ul class="nav nav-tabs nav-fill" id="myTab" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab" aria-controls="overview" aria-selected="true">Overview</button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="backstory-tab" data-bs-toggle="tab" data-bs-target="#backstory" type="button" role="tab" aria-controls="backstory" aria-selected="false">backstory</button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="personality-tab" data-bs-toggle="tab" data-bs-target="#personality" type="button" role="tab" aria-controls="personality" aria-selected="false">Personality</button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="relationships-tab" data-bs-toggle="tab" data-bs-target="#relationships" type="button" role="tab" aria-controls="relationships" aria-selected="false">Relationships</button>
-                    </li>
-                </ul>
+        <div class="row">
+            <div class="card page-card col-8">
+                <div class="card-header">
+                    <h4 class="card-title">Character Information</h4>
+                </div>
+
+                <div class="card-body" id="character-info"></div>
             </div>
 
-            <div class="card-body">
-                <!-- Tab panes -->
-                <div class="tab-content">
-                    <div class="tab-pane active" id="overview" role="tabpanel" aria-labelledby="overview-tab">
-                        <div class="row">
-                            <div class="col-sm-4 col-12">
-                                <div class="card highlight">
-                                    <div class="card-header">Basic Information</div>
-                                    <div class="card-body">
-                                        <div class="form-group mb-3">
-                                            <label for="character-name" class="form-label">Name:</label>
-                                            <input type="text" class="form-control" id="character-name" />
-                                        </div>
-                                        <div class="form-group">
-                                            <label for="character-race" class="form-label">Race:</label>
-                                            <input type="text" class="form-control" id="character-race" />
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+            <div class="card page-card col-4">
+                <div class="card-header">
+                    <h4 class="card-title">Character Components</h4>
+                </div>
 
-                            <div class="col-md-8 col-12">
-                                <div class="card highlight">
-                                    <div class="card-header">Classes & Abilities</div>
-                                    <div class="card-body">
-                                        <div id="classInput">
-                                            <div class="row mb-3 position-relative" style="padding-right: 30px">
-                                                <div class="col-md-4">
-                                                    <label for="class-name" class="form-label">Class:</label>
-                                                    <select id="class-name" class="form-control form-select">
-                                                        <option value="" selected hidden></option>
-                                                    </select>
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <label for="class-level" class="form-label">Level:</label>
-                                                    <input id="class-level" type="number" class="form-control" />
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <label for="class-subclass" class="form-label">Subclass:</label>
-                                                    <select id="class-subclass" class="form-control form-select">
-                                                        <option value="" selected hidden></option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <button id="add-class-btn" class="btn btn-secondary">Add Class</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="tab-pane" id="backstory" role="tabpanel" aria-labelledby="backstory-tab">
-                        <textarea id="character-backstory"></textarea>
-                    </div>
-                    <div class="tab-pane" id="personality" role="tabpanel" aria-labelledby="personality-tab">
-                        <textarea id="character-personality"></textarea>
-                    </div>
-                    <div class="tab-pane" id="relationships" role="tabpanel" aria-labelledby="relationships-tab">
-                        <!-- Relationships content goes here, character's connections with other NPCs or party members -->
-                    </div>
+                <div class="card-body">
+                    <div id="component-list"></div>
+                    <select class="form-control form-select" id="component-select">
+                        <option value="" hidden>Select a component</option>
+                    </select>
                 </div>
             </div>
         </div>
@@ -106,131 +45,341 @@
 </button>
 
 <script type="module">
-    const addClassBtn = document.getElementById('add-class-btn');
+    const componentSelect = document.getElementById('component-select');
+    const characterInfoEl = document.getElementById('character-info');
+    const componentListEl = document.getElementById('component-list');
 
-    const MDE_Instances = {};
+    const saveButton = document.getElementById('save-button');
 
-    let classes, classRowClone;
-    const classSelect = document.getElementById('class-name');
-    const levelSelect = document.getElementById('class-level');
-    const subclassSelect = document.getElementById('class-subclass');
+    let unsavedChanges = false;
 
-    setupPage();
+    class Component {
+        constructor(key) {
+            // Generate a random ID for the component
+            this.id = Date.now();
 
-    function setupPage() {
-        callService('/classes/getClasses/', 'GET', (res, xhr) => {
-            classes = res;
+            this.componentEl = document.createElement('div');
+            this.componentEl.dataset.componentId = this.id;
 
-            classes.forEach((item) => {
-                const option = document.createElement('option');
-                option.value = option.innerHTML = item.name;
+            this.dataEl = document.createElement('div');
+            this.dataEl.dataset.componentId = this.id;
+            this.dataEl.classList.add('mb-3');
 
-                classSelect.appendChild(option);
-            });
-        });
+            this.dataEl.innerHTML = `
+                <div class="card highlight">
+                    <div class="card-header collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-${this.id}">
+                        ${key}
+                    </div>
 
-        setupListeners();
-        setupMDEs();
+                    <div class="card-body collapse p-0" id="collapse-${this.id}">
+                        <div class="card-inner p-3">
+                            <div class="form-group" component-data>
+
+                            </div>
+
+                            <button class="btn btn-danger" id="delete-button">Delete</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            this.dataEl.querySelector('#delete-button').addEventListener('click', () => this.deleteComponent());
+
+            components.push(this);
+        }
+
+        generateComponent() {
+            return this;
+        }
+
+        toJson() {
+            return this;
+        }
+
+        deleteComponent() {
+            if (!confirm('Are you sure you want to delete this component?')) return;
+
+            this.componentEl.remove();
+            this.dataEl.remove();
+
+            components = components.filter((component) => component.id !== this.id);
+
+            for (const key in componentLimits) {
+                const limit = componentLimits[key];
+                const filteredComponents = components.filter((component) => component instanceof componentList[key]);
+
+                if (filteredComponents.length < limit) {
+                    componentSelect.querySelector(`option[value="${key}"]`).disabled = false;
+                }
+            }
+
+            delete this;
+        }
+
+        render() {
+            this.generateComponent();
+
+            characterInfoEl.appendChild(this.componentEl);
+            componentListEl.appendChild(this.dataEl);
+        }
+    }
+
+    const componentList = {
+        General: class NameComponent extends Component {
+            constructor(key) {
+                super(key);
+
+                this.componentEl.classList.add('form-group', 'mb-3');
+                this.componentType = 'general';
+            }
+
+            generateComponent() {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'row';
+
+                // Create the label and input for Name
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'col-lg-6 mb-3';
+
+                const nameLabel = document.createElement('label');
+                nameLabel.for = 'name-component';
+                nameLabel.innerHTML = 'Name';
+
+                const nameInput = document.createElement('input');
+                nameInput.type = 'text';
+                nameInput.classList.add('form-control');
+                nameInput.id = 'name-component';
+
+                nameDiv.append(nameLabel, nameInput);
+
+                // Create the label and input for Race
+
+                const raceDiv = document.createElement('div');
+                raceDiv.className = 'col-lg-6 mb-3';
+
+                const raceLabel = document.createElement('label');
+                raceLabel.for = 'race-component';
+                raceLabel.innerHTML = 'Race';
+
+                const raceInput = document.createElement('input');
+                raceInput.type = 'text';
+                raceInput.classList.add('form-control');
+                raceInput.id = 'race-component';
+
+                raceDiv.append(raceLabel, raceInput);
+
+                // Append the nameDiv and raceDiv to the rowDiv
+                rowDiv.append(nameDiv, raceDiv);
+
+                // Append the rowDiv to the componentEl
+                this.componentEl.append(rowDiv);
+            }
+
+            toJson() {
+                return {
+                    name: this.componentEl.querySelector('input').value,
+                };
+            }
+        },
+        Class: class ClassComponent extends Component {
+            constructor(key) {
+                super(key);
+
+                this.componentEl.classList.add('form-group', 'mb-3');
+                this.componentType = 'class';
+            }
+
+            generateComponent() {
+                // Create a row div
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'row';
+
+                // Create the label and input for Class
+                const classDiv = document.createElement('div');
+                classDiv.className = 'col-lg-4 mb-3';
+
+                const classLabel = document.createElement('label');
+                classLabel.for = 'class-component';
+                classLabel.innerHTML = 'Class';
+
+                const classInput = document.createElement('input');
+                classInput.type = 'text';
+                classInput.classList.add('form-control');
+                classInput.id = 'class-component';
+
+                classDiv.append(classLabel, classInput);
+
+                // Create the label and input for Subclass
+                const subclassDiv = document.createElement('div');
+                subclassDiv.className = 'col-lg-4 mb-3';
+
+                const subclassLabel = document.createElement('label');
+                subclassLabel.for = 'subclass-component';
+                subclassLabel.innerHTML = 'Subclass';
+
+                const subclassInput = document.createElement('input');
+                subclassInput.type = 'text';
+                subclassInput.classList.add('form-control');
+                subclassInput.id = 'subclass-component';
+
+                subclassDiv.append(subclassLabel, subclassInput);
+
+                // Create the label and input for Level
+                const levelDiv = document.createElement('div');
+                levelDiv.className = 'col-lg-4 mb-3';
+
+                const levelLabel = document.createElement('label');
+                levelLabel.for = 'level-component';
+                levelLabel.innerHTML = 'Level';
+
+                const levelInput = document.createElement('input');
+                levelInput.type = 'number';
+                levelInput.classList.add('form-control');
+                levelInput.id = 'level-component';
+
+                levelDiv.append(levelLabel, levelInput);
+
+                // Append the classDiv, subclassDiv, and levelDiv to the rowDiv
+                rowDiv.append(classDiv, subclassDiv, levelDiv);
+
+                // Append the rowDiv to the componentEl
+                this.componentEl.append(rowDiv);
+            }
+
+            toJson() {
+                return {
+                    class: this.componentEl.querySelector('#class-component').value,
+                    subclass: this.componentEl.querySelector('#subclass-component').value,
+                    level: this.componentEl.querySelector('#level-component').value,
+                };
+            }
+        },
+        Textbox: class TextboxComponent extends Component {
+            constructor(key) {
+                super(key);
+
+                this.componentEl.classList.add('form-group', 'mb-3');
+                this.componentType = 'textbox';
+                this.title = 'Textbox';
+
+                this.dataEl.querySelector('[component-data]').innerHTML = `
+                    <label for="textbox-component">Title</label>
+                    <input type="text" class="form-control" id="textbox-component">${this.title}</input>
+                `;
+
+                this.dataEl.querySelector('[component-data] #textbox-component').addEventListener('input', (e) => {
+                    const value = e.target.value;
+
+                    this.title = value;
+                    this.dataEl.querySelector('.card-header').innerHTML = 'Textbox - ' + value;
+                    this.componentEl.querySelector('label').innerHTML = value;
+                });
+            }
+
+            generateComponent() {
+                const label = document.createElement('label');
+                label.for = 'textbox-component';
+                label.innerHTML = 'Textbox';
+
+                const textarea = document.createElement('textarea');
+                textarea.classList.add('form-control');
+                textarea.id = 'textbox-component';
+
+                this.componentEl.append(label, textarea);
+            }
+
+            toJson() {
+                return {
+                    title: this.title,
+                    content: this.componentEl.querySelector('textarea').value,
+                };
+            }
+        },
+    };
+
+    let components = [];
+    let componentLimits = {
+        General: 1,
+    };
+
+    for (const key in componentList) {
+        const option = document.createElement('option');
+        option.classList.add('p-2');
+        option.value = key;
+        option.innerHTML = key;
+
+        componentSelect.appendChild(option);
     }
 
     function setupListeners() {
-        // Class Features
-        classSelect.addEventListener('change', getSubclasses);
+        // Handle Component Selector
+        componentSelect.addEventListener('change', handleComponentSelect);
+        function handleComponentSelect(e) {
+            const component = new componentList[componentSelect.value](componentSelect.value);
+            component.render();
 
-        function getSubclasses(e) {
-            subclassSelect.innerHTML = '<option value="" selected hidden></option>';
-            subclassSelect.value = '';
-            e.target.value;
+            for (const key in componentLimits) {
+                const limit = componentLimits[key];
+                const filteredComponents = components.filter((component) => component instanceof componentList[key]);
+
+                if (filteredComponents.length >= limit) {
+                    componentSelect.querySelector(`option[value="${key}"]`).disabled = true;
+                }
+            }
+
+            componentSelect.value = '';
         }
 
-        addClassBtn.addEventListener('click', addClass);
+        document.addEventListener('input', () => {
+            unsavedChanges = true;
 
-        function addClass() {
-            let classInput = document.getElementById('classInput');
-
-            let classRow = document.createElement('div');
-            classRow.classList.add('row', 'mb-3', 'position-relative');
-            classRow.style.paddingRight = '30px';
-
-            classRow.innerHTML = `
-            <div class="col-md-4">
-                <label for="class-name" class="form-label">Class:</label>
-                <input id="class-name" type="text" class="form-control" />
-            </div>
-            <div class="col-md-4">
-                <label for="class-level" class="form-label">Level:</label>
-                <input id="class-level" type="number" class="form-control" />
-            </div>
-            <div class="col-md-4">
-                <label for="class-subclass" class="form-label">Subclass:</label>
-                <input id="class-subclass" type="text" class="form-control" />
-            </div>
-            <div class="delete-btn" style="position: absolute; right: 6px; width: 30px; padding: 0; bottom: 4px; text-align: center; cursor: pointer;">
-                <span style="font-weight: 600; color: red; font-size: 20px" aria-hidden="true">&times;</span>
-            </div>
-        `;
-
-            classInput.appendChild(classRow);
-
-            let deleteBtn = classRow.querySelector('.delete-btn');
-            deleteBtn.addEventListener('click', function () {
-                classInput.removeChild(classRow);
-            });
-        }
-    }
-
-    function setupMDEs() {
-        MDE_Instances.backstory = new EasyMDE({
-            element: document.getElementById('character-backstory'),
-            spellChecker: true, // Disable spell checker
-            autosave: {
-                enabled: false,
-            },
-            toolbar: ['bold', 'italic', 'strikethrough', '|', 'heading-1', 'heading-2', 'heading-3', '|', 'quote', 'unordered-list', 'horizontal-rule', '|', 'preview', 'guide'], // Customize toolbar buttons
+            saveButton.classList.add('active');
         });
-        MDE_Instances.personality = new EasyMDE({
-            element: document.getElementById('character-personality'),
-            spellChecker: true, // Disable spell checker
-            autosave: {
-                enabled: false,
-            },
-            toolbar: ['bold', 'italic', 'strikethrough', '|', 'heading-1', 'heading-2', 'heading-3', '|', 'quote', 'unordered-list', 'horizontal-rule', '|', 'preview', 'guide'], // Customize toolbar buttons
+
+        saveButton.addEventListener('click', () => {
+            const JSONData = generateJSON();
+
+            console.log(JSONData);
+
+            callService(
+                '/content/saveCharacter',
+                'POST',
+                (res, xhr) => {
+                    if (xhr.status === 200) {
+                        unsavedChanges = false;
+                        saveButton.classList.remove('active');
+
+                        saveButton.classList.remove('active');
+                    } else {
+                        alert('Failed to save character.');
+                    }
+                },
+                JSONData
+            );
+        });
+
+        window.addEventListener('beforeunload', (e) => {
+            if (unsavedChanges) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
         });
     }
 
     function generateJSON() {
-        const name = document.getElementById('character-name');
-        const race = document.getElementById('character-race');
+        const characterInfo = [];
 
-        const classRows = document.querySelectorAll('#classInput .row');
-        const classObjects = [];
+        components.forEach((component, i) => {
+            let JSONData = component.toJson();
 
-        classRows.forEach((row) => {
-            // Extract values from the row
-            const className = row.querySelector('[id^="class-name"]').value;
-            const classLevel = row.querySelector('[id^="class-level"]').value;
-            const classSubclass = row.querySelector('[id^="class-subclass"]').value;
+            JSONData.type = component.componentType;
+            JSONData.order = i;
 
-            // Create object with extracted values and push to array
-            const classObject = {
-                name: className,
-                level: classLevel,
-                subclass: classSubclass,
-            };
-
-            if (className || classLevel || classSubclass) classObjects.push(classObject);
+            characterInfo.push(JSONData);
         });
 
-        const JSON = {
-            name: name.value,
-            race: race.value,
-            classes: classObjects,
-        };
-
-        return JSON;
+        return characterInfo.sort((a, b) => a.order - b.order);
     }
 
-    window.x = () => {
-        console.log(generateJSON());
-    };
+    setupListeners();
 </script>

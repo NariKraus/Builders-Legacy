@@ -291,7 +291,7 @@
   background-color: rgba(0, 0, 0, 0);
   border-radius: 50%;
   animation: twinkle infinite;
-  animation-duration: 14s;
+  animation-duration: 9s;
   box-shadow: 0 0 2px 1px var(--star-color);
 }
 .star:nth-child(6n+1) {
@@ -462,6 +462,12 @@ textarea {
 }
 .card.highlight .card-header {
   background-color: #39345e;
+}
+.card:has(.collapse) .card-header {
+  cursor: pointer;
+}
+.card:has(.collapse) .card-header.collapsed {
+  border-radius: 6px;
 }
 
 .nav-tabs {

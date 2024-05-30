@@ -144,6 +144,16 @@ textarea {
             background-color: $secondary;
         }
     }
+
+    &:has(.collapse) {
+        .card-header {
+            cursor: pointer;
+
+            &.collapsed {
+                border-radius: 6px;
+            }
+        }
+    }
 }
 
 // Navs & Tabs
