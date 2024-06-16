@@ -36,10 +36,6 @@
     </div>
 </main>
 
-<section>
-    <option value=""></option>
-</section>
-
 <button id="save-button">
     <i class="bx bxs-save"></i>
 </button>
@@ -50,6 +46,28 @@
     const componentListEl = document.getElementById('component-list');
 
     const saveButton = document.getElementById('save-button');
+
+    const characterData = [
+        {
+            name: 'Xazzi',
+            race: 'Kobold',
+            type: 'general',
+            order: 0,
+        },
+        {
+            class: 'Artificer',
+            subclass: 'Armourer',
+            level: '6',
+            type: 'class',
+            order: 1,
+        },
+        {
+            title: 'Fun Fact',
+            content: 'Xazzi exists',
+            type: 'textbox',
+            order: 2,
+        },
+    ];
 
     let unsavedChanges = false;
 
@@ -69,6 +87,10 @@
                 <div class="card highlight">
                     <div class="card-header collapsed" data-bs-toggle="collapse" data-bs-target="#collapse-${this.id}">
                         ${key}
+                        <div class="move-buttons">
+                            <button class="bx bx-chevron-up" id="move-up"> </button>
+                            <button class="bx bx-chevron-down" id="move-down"> </button>
+                        </div>
                     </div>
 
                     <div class="card-body collapse p-0" id="collapse-${this.id}">
@@ -82,6 +104,42 @@
                     </div>
                 </div>
             `;
+
+            // Add event listeners for the move up and move down buttons
+            this.dataEl.querySelector(`#move-up`).addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+
+                const index = components.findIndex((component) => component.id === this.id);
+
+                if (index === 0) return;
+
+                const temp = components[index - 1];
+                components[index - 1] = components[index];
+                components[index] = temp;
+
+                characterInfoEl.insertBefore(this.componentEl, this.componentEl.previousElementSibling);
+                componentListEl.insertBefore(this.dataEl, this.dataEl.previousElementSibling);
+
+                unsavedChanges = true;
+                saveButton.classList.add('active');
+            });
+            this.dataEl.querySelector(`#move-down`).addEventListener('mousedown', (e) => {
+                e.stopPropagation();
+
+                const index = components.findIndex((component) => component.id === this.id);
+
+                if (index === components.length - 1) return;
+
+                const temp = components[index + 1];
+                components[index + 1] = components[index];
+                components[index] = temp;
+
+                characterInfoEl.insertBefore(this.componentEl, this.componentEl.nextElementSibling.nextElementSibling);
+                componentListEl.insertBefore(this.dataEl, this.dataEl.nextElementSibling.nextElementSibling);
+
+                unsavedChanges = true;
+                saveButton.classList.add('active');
+            });
 
             this.dataEl.querySelector('#delete-button').addEventListener('click', () => this.deleteComponent());
 
@@ -125,7 +183,8 @@
     }
 
     const componentList = {
-        General: class NameComponent extends Component {
+        // Name and Race
+        general: class GeneralComponent extends Component {
             constructor(key) {
                 super(key);
 
@@ -175,13 +234,20 @@
                 this.componentEl.append(rowDiv);
             }
 
+            fillComponent() {
+                this.componentEl.querySelector('#name-component').value = this.data.name;
+                this.componentEl.querySelector('#race-component').value = this.data.race;
+            }
+
             toJson() {
                 return {
-                    name: this.componentEl.querySelector('input').value,
+                    name: this.componentEl.querySelector('#name-component').value,
+                    race: this.componentEl.querySelector('#race-component').value,
                 };
             }
         },
-        Class: class ClassComponent extends Component {
+        // Character Class Info
+        class: class ClassComponent extends Component {
             constructor(key) {
                 super(key);
 
@@ -246,6 +312,12 @@
                 this.componentEl.append(rowDiv);
             }
 
+            fillComponent() {
+                this.componentEl.querySelector('#class-component').value = this.data.class;
+                this.componentEl.querySelector('#subclass-component').value = this.data.subclass;
+                this.componentEl.querySelector('#level-component').value = this.data.level;
+            }
+
             toJson() {
                 return {
                     class: this.componentEl.querySelector('#class-component').value,
@@ -254,7 +326,8 @@
                 };
             }
         },
-        Textbox: class TextboxComponent extends Component {
+        // Generic Renamable Textbox
+        textbox: class TextboxComponent extends Component {
             constructor(key) {
                 super(key);
 
@@ -288,6 +361,11 @@
                 this.componentEl.append(label, textarea);
             }
 
+            fillComponent() {
+                this.dataEl.querySelector('[component-data] #textbox-component').value = this.data.title;
+                this.componentEl.querySelector('textarea').value = this.data.content;
+            }
+
             toJson() {
                 return {
                     title: this.title,
@@ -299,7 +377,7 @@
 
     let components = [];
     let componentLimits = {
-        General: 1,
+        general: 1,
     };
 
     for (const key in componentList) {
@@ -313,8 +391,7 @@
 
     function setupListeners() {
         // Handle Component Selector
-        componentSelect.addEventListener('change', handleComponentSelect);
-        function handleComponentSelect(e) {
+        componentSelect.addEventListener('change', (e) => {
             const component = new componentList[componentSelect.value](componentSelect.value);
             component.render();
 
@@ -328,7 +405,7 @@
             }
 
             componentSelect.value = '';
-        }
+        });
 
         document.addEventListener('input', () => {
             unsavedChanges = true;
@@ -359,10 +436,10 @@
         });
 
         window.addEventListener('beforeunload', (e) => {
-            if (unsavedChanges) {
-                e.preventDefault();
-                e.returnValue = '';
-            }
+            // if (unsavedChanges) {
+            //     e.preventDefault();
+            //     e.returnValue = '';
+            // }
         });
     }
 
@@ -381,5 +458,40 @@
         return characterInfo.sort((a, b) => a.order - b.order);
     }
 
-    setupListeners();
+    function setupPage() {
+        if (!characterData) {
+            const component = new componentList.General('general');
+            component.render();
+        } else {
+            characterData.forEach((component) => {
+                const newComponent = new componentList[component.type](component.type);
+                newComponent.render();
+
+                newComponent.data = component;
+                newComponent.fillComponent();
+
+                for (const key in componentLimits) {
+                    const limit = componentLimits[key];
+                    const filteredComponents = components.filter((component) => component instanceof componentList[key]);
+
+                    if (filteredComponents.length >= limit) {
+                        componentSelect.querySelector(`option[value="${key}"]`).disabled = true;
+                    }
+                }
+            });
+        }
+
+        for (const key in componentLimits) {
+            const limit = componentLimits[key];
+            const filteredComponents = components.filter((component) => component instanceof componentList[key]);
+
+            if (filteredComponents.length >= limit) {
+                componentSelect.querySelector(`option[value="${key}"]`).disabled = true;
+            }
+        }
+
+        setupListeners();
+    }
+
+    setupPage();
 </script>

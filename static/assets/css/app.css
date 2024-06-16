@@ -291,7 +291,7 @@
   background-color: rgba(0, 0, 0, 0);
   border-radius: 50%;
   animation: twinkle infinite;
-  animation-duration: 9s;
+  animation-duration: 10s;
   box-shadow: 0 0 2px 1px var(--star-color);
 }
 .star:nth-child(6n+1) {
@@ -317,7 +317,7 @@
     opacity: 1;
   }
   50% {
-    opacity: 0;
+    opacity: 0.2;
   }
   100% {
     opacity: 1;
@@ -542,4 +542,32 @@ textarea {
 #note-editor #input-container {
   display: flex;
   flex-direction: column;
+}
+#note-editor .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+#note-editor .move-buttons {
+  display: flex;
+  flex-direction: column;
+}
+#note-editor .move-buttons button {
+  font-size: 1.2em;
+  color: #f0f0f0;
+  background-color: unset;
+  border: none;
+}
+#note-editor .move-buttons button:hover {
+  color: #007bff;
+}
+
+#isotope-page .isotope-grid-item {
+  text-decoration: none;
+  color: #f0f0f0;
+}
+#isotope-page .isotope-grid-item .isotope-grid-card {
+  display: flex;
+  width: 300px;
+  background-color: #666666;
 }

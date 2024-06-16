@@ -53,4 +53,10 @@ function menuBtnChange() {
     }
 }
 
-sidebar.querySelector(`a[href="${window.location.pathname}"]`).classList.add('active')
+let tab = sidebar.querySelector(`a[href="${window.location.pathname}"]`);
+if (tab) tab.classList.add('active');
+
+function getUrlParams() {
+    const params = new URLSearchParams(window.location.search);
+    return params;
+}

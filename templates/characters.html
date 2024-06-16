@@ -1,0 +1,84 @@
+<script src="https://unpkg.com/isotope-layout@3/dist/isotope.pkgd.min.js"></script>
+
+<main id="isotope-page">
+    <div class="page-header shadow-sm sticky-top">
+        <div class="container-xl">
+            <div class="d-flex align-items-center justify-content-between">
+                <h1 tabindex="0" class="app-page-title m-0">Characters</h1>
+            </div>
+        </div>
+    </div>
+
+    <div class="content pt-3 p-md-3 p-lg-4">
+        <div class="card page-card">
+            <div class="card-header">
+                <div class="form-group mb-2">
+                    <label for="name_filter">Name</label>
+                    <input type="text" class="form-control" id="name_filter" name="name_filter" />
+                </div>
+            </div>
+
+            <div class="card-body">
+                <div id="isotope-grid"></div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script type="module">
+    const nameFilter = document.getElementById('name_filter');
+
+    let characters = [];
+    let iso;
+
+    let isotopeGrid = document.getElementById('isotope-grid');
+
+    setupPage();
+
+    function setupPage() {
+        callService('/content/loadNotes/character', 'GET', (res, xhr) => {
+            if (xhr.status === 200) {
+                characters = res;
+
+                setupIsotopeGrid();
+                setupListeners();
+            }
+        });
+    }
+
+    function setupIsotopeGrid() {
+        characters.forEach((character) => {
+            let characterElement = htmlToElement(`
+                <a href="/note-editor?type=character&id=${character._id}" class="isotope-grid-item">
+                    <div class="isotope-grid-card">
+                        <div class="character-data">
+                            <p class="name">${character.name}</p>
+                            <p class="details">${character.race} - ${character.status}</p>
+                        </div>
+                    </div>
+                </a>
+            `);
+
+            isotopeGrid.appendChild(characterElement);
+        });
+
+        iso = new Isotope(isotopeGrid, {
+            itemSelector: '.isotope-grid-item',
+            masonry: {
+                columnWidth: 300,
+                gutter: 20,
+            },
+        });
+    }
+
+    function setupListeners() {
+        nameFilter.addEventListener('input', function () {
+            let filterValue = nameFilter.value.toLowerCase();
+            iso.arrange({
+                filter: function (itemElem) {
+                    return itemElem.querySelector('.name').textContent.toLowerCase().includes(filterValue);
+                },
+            });
+        });
+    }
+</script>

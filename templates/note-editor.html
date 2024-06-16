@@ -1,0 +1,237 @@
+<link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css" />
+<script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
+
+<main id="note-editor">
+    <div class="page-header shadow-sm sticky-top">
+        <div class="container-xl">
+            <div class="d-flex align-items-center justify-content-between">
+                <h1 tabindex="0" class="app-page-title m-0">Note Editor</h1>
+            </div>
+        </div>
+    </div>
+
+    <div class="content pt-3 p-md-3 p-lg-4">
+        <div class="row">
+            <div class="col-9 left">
+                <div class="card page-card">
+                    <div class="card-header">
+                        <h4 class="card-title">Notes</h4>
+                    </div>
+                    <div class="card-body">
+                        <textarea name="character-info" id="character-info"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-3 right">
+                <div class="card page-card">
+                    <div class="card-header">
+                        <h4 class="card-title">General Details</h4>
+                    </div>
+                    <div class="card-body" id="details"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<button id="save-button">
+    <i class="bx bxs-save"></i>
+</button>
+
+<script type="module">
+    const detailsEl = document.getElementById('details');
+    const saveButton = document.getElementById('save-button');
+
+    let noteData = {};
+
+    let unsavedChanges = false;
+
+    let urlParams = getUrlParams();
+    let noteType = urlParams.get('type') ?? 'character';
+
+    setupPage();
+
+    function setupPage() {
+        if (urlParams.has('id')) {
+            callService('/content/loadNote/' + urlParams.get('id'), 'GET', (res, xhr) => {
+                if (xhr.status === 200) {
+                    noteData = res;
+
+                    if (!urlParams.has('type')) {
+                        noteType = noteData.type;
+                    }
+
+                    setupNotes();
+                    setupListeners();
+                } else {
+                    alert('Failed to load character.');
+                }
+            });
+        } else {
+            setupNotes();
+            setupListeners();
+        }
+    }
+
+    function setupNotes() {
+        document.querySelector('.app-page-title').innerHTML = noteType.charAt(0).toUpperCase() + noteType.slice(1) + ' Editor';
+
+        const easyMDE = new EasyMDE({
+            element: document.getElementById('character-info'),
+            spellChecker: false,
+            forceSync: true,
+            status: false,
+            toolbar: ['bold', 'italic', 'heading', '|', 'quote', 'unordered-list', 'ordered-list', '|', 'preview'],
+        });
+
+        const templates = {
+            character: `
+                # [Insert Name Here]
+
+                ## General Information
+                - **Race:** [Insert Race Here]
+                - **Gender:** [Insert Gender Here]
+                - **Class:** [Insert Class Here]
+                - **Status:** [Insert Status Here]
+
+                ## Appearance
+                - **Height:** [Insert Height Here]
+                - **Weight:** [Insert Weight Here]
+
+                ## Personality
+                - **Temperament:** [Insert Temperament Here]
+                - **Likes:** [Insert Likes Here]
+                - **Dislikes:** [Insert Dislikes Here]
+
+                ## Relationships
+                - **Allies:** [Insert Allies Here]
+                - **Enemies:** [Insert Enemies Here]
+
+                ## Interactions
+                - **First Encounter:** [Insert First Encounter Details Here]
+                - **Notable Interactions:** [Insert Notable Interactions Here]
+
+                ## Notes
+                - [Insert Additional Notes Here]
+            `,
+        };
+
+        let template;
+        let html;
+
+        switch (noteType) {
+            case 'character':
+                template = templates.character;
+
+                html = `<div class="form-group mb-3">
+                            <label for="name">Name</label>
+                            <input type="text" class="form-control" id="name" />
+                        </div>
+                        
+                        <div class="form-group mb-3">
+                            <label for="race">Race</label>
+                            <input type="text" class="form-control" id="race" />
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label for="status">Status</label>
+                            <select class="form-control form-select" id="status">
+                                <option value="alive">Alive</option>
+                                <option value="deceased">Deceased</option>
+                                <option value="unknown">Unknown</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <input class="form-check-input" type="checkbox" id="is_PC" />
+                            <label class="form-check-label" for="is_PC">Is Player Character?</label>
+                        </div>`;
+
+                detailsEl.innerHTML = html;
+
+                break;
+
+            default:
+                break;
+        }
+
+        if (noteData && noteData.notes) {
+            populateDetails(noteData);
+            populateNotes(easyMDE, noteData.notes);
+        } else if (template) {
+            populateNotes(easyMDE, template);
+        } else {
+            console.error('No data to populate notes');
+        }
+    }
+
+    function populateDetails(data) {
+        detailsEl.querySelectorAll('input, select').forEach((el) => {
+            if (el.type === 'checkbox') {
+                el.checked = data[el.id];
+                return;
+            }
+
+            el.value = data[el.id];
+        });
+    }
+
+    function populateNotes(easyMDE, notes) {
+        easyMDE.value(
+            notes
+                .split('\n')
+                .map((line) => line.trim())
+                .join('\n')
+                .trim()
+        );
+    }
+
+    function setupListeners() {
+        document.addEventListener('input', () => {
+            unsavedChanges = true;
+
+            saveButton.classList.add('active');
+        });
+
+        saveButton.addEventListener('click', () => {
+            detailsEl.querySelectorAll('input, select').forEach((el) => {
+                if (el.type === 'checkbox') {
+                    noteData[el.id] = el.checked;
+                    return;
+                }
+
+                noteData[el.id] = el.value;
+            });
+
+            noteData.notes = document.getElementById('character-info').value;
+
+            noteData.type = noteType;
+
+            callService(
+                '/content/saveNote',
+                'POST',
+                (res, xhr) => {
+                    if (xhr.status === 200) {
+                        unsavedChanges = false;
+                        saveButton.classList.remove('active');
+
+                        saveButton.classList.remove('active');
+
+                        if (res.upsertedId) noteData._id = res.upsertedId;
+                    } else {
+                        alert('Failed to save character.');
+                    }
+                },
+                noteData
+            );
+        });
+
+        window.addEventListener('beforeunload', (e) => {
+            // if (unsavedChanges) {
+            //     e.preventDefault();
+            //     e.returnValue = '';
+            // }
+        });
+    }
+</script>
