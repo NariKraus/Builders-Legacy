@@ -1,27 +1,18 @@
-<script src="https://unpkg.com/isotope-layout@3/dist/isotope.pkgd.min.js"></script>
+<link href="https://unpkg.com/tabulator-tables@6.2.1/dist/css/tabulator.min.css" rel="stylesheet" />
+<script type="text/javascript" src="https://unpkg.com/tabulator-tables@6.2.1/dist/js/tabulator.min.js"></script>
 
-<main id="isotope-page">
+<main id="table-page">
     <div class="page-header shadow-sm sticky-top">
         <div class="container-xl">
             <div class="d-flex align-items-center justify-content-between">
                 <h1 tabindex="0" class="app-page-title m-0">Characters</h1>
+                <a href="/note-editor?type=characters&new=true" class="btn btn-primary">Create Character</a>
             </div>
         </div>
     </div>
 
     <div class="content pt-3 p-md-3 p-lg-4">
-        <div class="card page-card">
-            <div class="card-header">
-                <div class="form-group mb-2">
-                    <label for="name_filter">Name</label>
-                    <input type="text" class="form-control" id="name_filter" name="name_filter" />
-                </div>
-            </div>
-
-            <div class="card-body">
-                <div id="isotope-grid"></div>
-            </div>
-        </div>
+        <div id="character-table"></div>
     </div>
 </main>
 
@@ -29,56 +20,86 @@
     const nameFilter = document.getElementById('name_filter');
 
     let characters = [];
-    let iso;
-
-    let isotopeGrid = document.getElementById('isotope-grid');
+    let statusList = [];
+    let table;
 
     setupPage();
 
     function setupPage() {
-        callService('/content/loadNotes/character', 'GET', (res, xhr) => {
+        callService('/content/getNotes/characters', 'GET', (res, xhr) => {
             if (xhr.status === 200) {
                 characters = res;
 
-                setupIsotopeGrid();
+                // What's the easiest way of getting all of the unique statuses?
+                statusList = characters.map((c) => {
+                    let status = c.status.toLowerCase();
+
+                    status = status.replace(/^./, status[0].toUpperCase());
+
+                    return status;
+                });
+                statusList = statusList.filter((value, index, self) => self.indexOf(value) === index);
+
+                setupTable();
                 setupListeners();
             }
         });
     }
 
-    function setupIsotopeGrid() {
-        characters.forEach((character) => {
-            let characterElement = htmlToElement(`
-                <a href="/note-editor?type=character&id=${character._id}" class="isotope-grid-item">
-                    <div class="isotope-grid-card">
-                        <div class="character-data">
-                            <p class="name">${character.name}</p>
-                            <p class="details">${character.race} - ${character.status}</p>
-                        </div>
-                    </div>
-                </a>
-            `);
+    function setupTable() {
+        let tableColumns = [
+            {
+                field: 'icon',
+                formatter: function (cell) {
+                    let el = cell.getElement();
+                    let data = cell.getData();
 
-            isotopeGrid.appendChild(characterElement);
-        });
+                    el.style.paddingLeft = '10px';
 
-        iso = new Isotope(isotopeGrid, {
-            itemSelector: '.isotope-grid-item',
-            masonry: {
-                columnWidth: 300,
-                gutter: 20,
-            },
-        });
-    }
+                    let container = document.createElement('div');
+                    container.style.display = 'flex';
+                    container.style.justifyContent = 'center';
+                    container.style.alignItems = 'center';
+                    container.style.backgroundColor = data.colour;
+                    container.style.padding = '5px';
 
-    function setupListeners() {
-        nameFilter.addEventListener('input', function () {
-            let filterValue = nameFilter.value.toLowerCase();
-            iso.arrange({
-                filter: function (itemElem) {
-                    return itemElem.querySelector('.name').textContent.toLowerCase().includes(filterValue);
+                    let img = document.createElement('img');
+                    img.src = data.icon;
+                    img.alt = data.name;
+                    img.style.height = '30px';
+                    img.style.width = '30px';
+
+                    container.appendChild(img);
+
+                    return container;
                 },
-            });
+                width: 50,
+                resizable: false,
+                headerSort: false,
+            },
+            { title: 'Name', field: 'name', sorter: 'string', resizable: false, headerFilter: 'input' },
+            { title: 'Status', field: 'status', sorter: 'string', resizable: false, headerFilter: 'list', headerFilterParams: { values: statusList, sortValuesList: 'asc' } },
+            { title: 'Race', field: 'race', sorter: 'string', resizable: false, headerFilter: 'input' },
+            { title: 'Tags', field: 'tags', resizable: false,  formatter: 'html', mutator: (value) => htmlToElement('<span class="badge text-light bg-danger bg-gradient">Work In Progress</span>') },
+            { title: 'Pinned', field: 'pinned', resizable: false,  formatter: 'html', mutator: (value) => htmlToElement('<span class="badge text-light bg-success bg-gradient">Work In Progress</span>') },
+        ];
+
+        table = new Tabulator('#character-table', {
+            data: characters,
+            columns: tableColumns,
+            layout: 'fitColumns',
+            resizableRows: false,
+            initialSort: [{ column: 'name', dir: 'asc' }],
+            // Pagination
+            pagination: 'local',
+            paginationSize: 10,
+            paginationSizeSelector: [10, 25, 50, 100],
+        });
+
+        table.on('rowClick', (e, row) => {
+            window.location.href = `/note-editor?type=characters&id=${row.getData()._id}`;
         });
     }
+
+    function setupListeners() {}
 </script>

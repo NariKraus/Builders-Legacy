@@ -16,7 +16,11 @@ var callService = (endpoint, method, callback, data = null, externalUrl = false)
         }
     };
     if (!externalUrl) {
-        xhr.open(method, 'https://api.narikraus.co.uk' + endpoint, true);
+        if (endpoint.includes('/content')) {
+            xhr.open(method, 'https://api.narikraus.co.uk' + endpoint, true);
+        } else {
+            xhr.open(method, 'https://bl.narikraus.co.uk' + endpoint, true);
+        }
     } else {
         xhr.open(method, endpoint, true);
     }

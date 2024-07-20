@@ -1,0 +1,215 @@
+<link href="https://unpkg.com/tabulator-tables@6.2.1/dist/css/tabulator.min.css" rel="stylesheet" />
+<script type="text/javascript" src="https://unpkg.com/tabulator-tables@6.2.1/dist/js/tabulator.min.js"></script>
+
+<main id="table-page">
+    <div class="page-header shadow-sm sticky-top">
+        <div class="container-xl">
+            <div class="d-flex align-items-center justify-content-between">
+                <h1 tabindex="0" class="app-page-title m-0">Tags</h1>
+                <button id="newTag" class="btn btn-primary">Create Tag</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="content pt-3 p-md-3 p-lg-4">
+        <div id="tag-table"></div>
+    </div>
+
+    <!-- Tag Modal -->
+    <div class="modal fade" id="tagModal" tabindex="-1" aria-labelledby="tagModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="tagModalLabel">Tag</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="tagForm">
+                        <div class="mb-3">
+                            <label for="label" class="form-label">Display Label</label>
+                            <input type="text" class="form-control" id="label" name="label" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="searchable_value" class="form-label">Searchable Value</label>
+                            <input type="text" class="form-control" id="searchable_value" name="searchable_value" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="color" class="form-label">Color</label>
+                            <input type="color" class="form-control" id="color" name="color" value="#ff0000" required />
+                        </div>
+                        <div class="mb-3">
+                            <label for="text_color" class="form-label">Text Color</label>
+                            <select class="form-control form-select" id="text_color" name="text_color" required>
+                                <option value="#ffffff" selected>White</option>
+                                <option value="#000000">Black</option>
+                            </select>
+                        </div>
+                        <div id="example">
+                            <label for="example" class="form-label">Example</label>
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-gradient" id="example_badge"></span>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" form="tagForm" class="btn btn-primary">Create Tag</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script type="module">
+    const newTagButton = document.getElementById('newTag');
+    const tagForm = document.getElementById('tagForm');
+
+    const labelInput = document.getElementById('label');
+    const searchableValueInput = document.getElementById('searchable_value');
+    const colorInput = document.getElementById('color');
+    const textColorInput = document.getElementById('text_color');
+    const exampleBadge = document.getElementById('example_badge');
+
+    let tags = [];
+
+    let table;
+    let modal = new bootstrap.Modal(document.getElementById('tagModal'), {
+        backdrop: 'static',
+    });
+
+    setupPage();
+
+    function setupPage() {
+        setupTable();
+        setupListeners();
+    }
+
+    function setupTable() {
+        let tableColumns = [
+            {
+                title: 'Display Label',
+                field: 'label',
+                headerFilter: 'input',
+            },
+            {
+                title: 'Searchable Value',
+                field: 'searchable_value',
+                formatter: function (cell) {
+                    let data = cell.getData();
+
+                    return data.searchable_value.join(', ');
+                },
+                headerFilter: 'input',
+            },
+            {
+                title: 'Example',
+                formatter: function (cell) {
+                    let data = cell.getData();
+
+                    let container = document.createElement('div');
+                    container.style.display = 'flex';
+                    container.style.alignItems = 'center';
+
+                    let badge = document.createElement('span');
+                    badge.classList.add('badge', 'bg-gradient');
+                    badge.innerText = data.label;
+                    badge.style.color = data.text_color;
+                    badge.style.backgroundColor = data.color;
+
+                    container.appendChild(badge);
+
+                    return container;
+                },
+            },
+        ];
+
+        table = new Tabulator('#tag-table', {
+            data: tags,
+            columns: tableColumns,
+            layout: 'fitColumns',
+            resizableRows: false,
+            // Pagination
+            pagination: 'local',
+            paginationSize: 10,
+            paginationSizeSelector: [10, 25, 50, 100],
+        });
+
+        table.on('rowClick', (event, row) => {
+            // Open Tag Editor Modal with Row Data
+            const rowData = row.getData();
+
+            labelInput.value = rowData.label;
+            searchableValueInput.value = rowData.searchable_value.join(', ');
+            colorInput.value = rowData.color;
+            textColorInput.value = rowData.text_color;
+
+            modal.show();
+        });
+
+        updateTable();
+    }
+
+    function setupListeners() {
+        // Setup Listeners
+        newTagButton.addEventListener('click', () => {
+            modal.show();
+        });
+
+        tagForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+
+            const formData = new FormData(event.target);
+            const newTag = {
+                label: formData.get('label'),
+                searchable_value: formData
+                    .get('searchable_value')
+                    .split(',')
+                    .map((value) => value.trim().toLowerCase()),
+                color: formData.get('color'),
+                text_color: formData.get('text_color'),
+            };
+
+            callService(
+                '/content/updateTag',
+                'POST',
+                (res, xhr) => {
+                    if (xhr.status !== 200) {
+                        console.error(res);
+                        return;
+                    }
+
+                    updateTable();
+                    event.target.reset();
+                    updateBadgeAppearance();
+                    modal.hide();
+                },
+                newTag
+            );
+        });
+
+        function updateBadgeAppearance() {
+            exampleBadge.innerText = labelInput.value.length > 0 ? labelInput.value : 'No Label';
+            exampleBadge.style.backgroundColor = colorInput.value ?? '#ff0000';
+            exampleBadge.style.color = textColorInput.value ?? '#ffffff';
+        }
+
+        labelInput.addEventListener('input', updateBadgeAppearance);
+        colorInput.addEventListener('change', updateBadgeAppearance);
+        textColorInput.addEventListener('change', updateBadgeAppearance);
+
+        updateBadgeAppearance();
+    }
+
+    function updateTable() {
+        callService('/content/getTags', 'GET', (res, xhr) => {
+            if (xhr.status !== 200) {
+                console.error(res);
+                return;
+            }
+
+            tags = res;
+            table.setData(tags);
+        });
+    }
+</script>

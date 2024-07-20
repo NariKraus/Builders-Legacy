@@ -1,0 +1,91 @@
+#table-page {
+    .tabulator {
+        font-family: 'Nunito', sans-serif;
+        background-color: unset;
+        border: unset;
+
+        .tabulator-header {
+            background-color: $primary;
+            font-weight: 600;
+            border: unset;
+            border-radius: 6px 6px 0 0;
+            border: solid 1px rgba(240, 240, 240, 0.3);
+
+            .tabulator-col {
+                background-color: unset;
+                border: unset;
+                padding: 10px;
+
+                .tabulator-col-title {
+                    font-size: 1.5rem;
+                    color: $moon-white;
+                    font-weight: 600;
+                }
+
+                .tabulator-header-filter {
+                    input {
+                        border-radius: 6px;
+                        padding: 4px 8px !important;
+                    }
+                }
+            }
+        }
+
+        .tabulator-tableholder {
+            background: rgba(240, 240, 240, 0.1);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
+            border: solid rgba(240, 240, 240, 0.3);
+            border-width: 0 1px;
+            max-width: 100%;
+            overflow: hidden;
+
+            .tabulator-table {
+                background-color: transparent;
+
+                .tabulator-row {
+                    background-color: unset;
+                    border-width: 1px 0;
+                    padding: 5px 0;
+
+                    &:hover {
+                        background-color: rgba(240, 240, 240, 0.3);
+                    }
+
+                    .tabulator-cell {
+                        font-size: 1.1rem;
+                        padding: 5px 10px;
+                        color: $moon-white;
+                        border: unset;
+
+                        display: inline-flex;
+                        align-items: center;
+                    }
+                }
+            }
+        }
+
+        .tabulator-footer {
+            background-color: $primary;
+            border-radius: 0 0 6px 6px;
+
+            border: solid 1px rgba(240, 240, 240, 0.3);
+
+            .tabulator-paginator {
+                color: $moon-white;
+
+                button {
+                    background-color: $secondary;
+                    color: $moon-white;
+                    border: unset;
+
+                    &:hover {
+                        background-color: lighten($secondary, 10%);
+                        box-shadow: 0 0 10px $secondary;
+                    }
+                }
+            }
+        }
+    }
+}
