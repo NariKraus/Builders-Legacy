@@ -5,38 +5,39 @@
     <div class="page-header shadow-sm sticky-top">
         <div class="container-xl">
             <div class="d-flex align-items-center justify-content-between">
-                <h1 tabindex="0" class="app-page-title m-0">Characters</h1>
-                <a href="/note-editor?type=characters&new=true" class="btn btn-primary">Create Character</a>
+                <h1 tabindex="0" class="app-page-title m-0">Locations</h1>
+                <a href="/note-editor?type=locations&new=true" class="btn btn-primary">Create Location</a>
             </div>
         </div>
     </div>
 
     <div class="content pt-3 p-md-3 p-lg-4">
-        <div id="character-table"></div>
+        <div id="location-table"></div>
     </div>
 </main>
 
 <script type="module">
-    let characters = [];
-    let statusList = [];
+    let locations = [];
+    let typeList = [];
     let table;
 
     setupPage();
 
     function setupPage() {
-        callService('/content/getNotes/characters', 'GET', (res, xhr) => {
+        callService('/content/getNotes/locations', 'GET', (res, xhr) => {
             if (xhr.status === 200) {
-                characters = res;
+                locations = res;
 
-                // What's the easiest way of getting all of the unique statuses?
-                statusList = characters.map((c) => {
-                    let status = c.status.toLowerCase();
+                console.log(locations)
 
-                    status = status.replace(/^./, status[0].toUpperCase());
+                typeList = locations.map((c) => {
+                    let locationType = c.location_type.toLowerCase();
 
-                    return status;
+                    locationType = locationType.replace(/^./, locationType[0].toUpperCase());
+
+                    return locationType;
                 });
-                statusList = statusList.filter((value, index, self) => self.indexOf(value) === index);
+                typeList = typeList.filter((value, index, self) => self.indexOf(value) === index);
 
                 setupTable();
                 setupListeners();
@@ -81,8 +82,7 @@
                 headerSort: false,
             },
             { title: 'Name', field: 'name', sorter: 'string', resizable: false, headerFilter: 'input' },
-            { title: 'Status', field: 'status', sorter: 'string', resizable: false, headerFilter: 'list', headerFilterParams: { values: statusList, sortValuesList: 'asc' } },
-            { title: 'Race', field: 'race', sorter: 'string', resizable: false, headerFilter: 'input' },
+            { title: 'Type of Location', field: 'location_type', sorter: 'string', resizable: false, headerFilter: 'input' },
             {
                 title: 'Tags',
                 field: 'tags',
@@ -137,8 +137,8 @@
             },
         ];
 
-        table = new Tabulator('#character-table', {
-            data: characters,
+        table = new Tabulator('#location-table', {
+            data: locations,
             columns: tableColumns,
             layout: 'fitColumns',
             resizableRows: false,
@@ -151,11 +151,11 @@
             paginationSize: 10,
             paginationSizeSelector: [10, 25, 50, 100],
             // No Results
-            placeholder: 'No Characters Found',
+            placeholder: 'No Locations Found',
         });
 
         table.on('rowClick', (e, row) => {
-            window.location.href = `/note-editor?type=characters&id=${row.getData()._id}`;
+            window.location.href = `/note-editor?type=locations&id=${row.getData()._id}`;
         });
     }
 

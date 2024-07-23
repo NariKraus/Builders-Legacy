@@ -89,4 +89,70 @@
             }
         }
     }
+
+    #editor-container {
+        display: flex;
+        gap: 20px;
+
+        > div:has(#editor) {
+            flex: 1;
+        }
+        > div:has(#tag-container) {
+            width: 400px;
+            min-width: 400px;
+        }
+
+        @media (max-width: 1370px) {
+            flex-direction: column-reverse;
+
+            > div:has(#tag-container) {
+                width: unset;
+            }
+        }
+
+        #meta-card {
+            #meta-body {
+                .form-group:not(:last-child) {
+                    margin-bottom: 20px;
+                }
+
+                .colour-grid {
+                    display: grid;
+                    grid-template-columns: repeat(6, 1fr);
+                    gap: 8px;
+                    place-items: center;
+
+                    @media (max-width: 1200px) {
+                        grid-template-columns: repeat(12, 1fr);
+                    }
+
+                    .colour-icon {
+                        display: block;
+                        width: 100%;
+                        aspect-ratio: 1;
+                        border-radius: 50%;
+
+                        max-width: 50px;
+
+                        background-color: var(--colour);
+
+                        &:has(:checked) {
+                            border: 1px solid $moon-white;
+                            box-shadow: 0 0 5px 0 $moon-white, inset 0 0 5px 0 $moon-white;
+                        }
+
+                        input[type='radio'] {
+                            display: none;
+                        }
+                    }
+                }
+            }
+        }
+
+        #tag-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+    }
 }

@@ -24,13 +24,33 @@
             </div>
 
             <div>
-                <div class="card page-card" id="meta-card">
+                <div class="card page-card" style="margin-bottom: 20px" id="meta-card">
                     <div class="card-header">
                         <h4 class="card-title" id="meta-title">Metadata</h4>
                     </div>
                     <form class="card-body" id="meta-body">
                         <!--  -->
                     </form>
+                </div>
+
+                <div class="card page-card">
+                    <div class="card-header">
+                        <h4 class="card-title">Tags</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label for="tag-select">Tags</label>
+                            <select class="form-control form-select" name="tag-select" id="tag-select">
+                                <option value="" selected hidden>Select a tag...</option>
+                            </select>
+                        </div>
+
+                        <button class="btn btn-secondary w-100 my-3" type="button" id="add-tag">Add Tag</button>
+
+                        <div class="tags-container" id="tag-container">
+                            <!--  -->
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -50,6 +70,10 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
+                    <div class="form-group mb-3">
+                        <label for="icon-search">Search</label>
+                        <input type="text" class="form-control" id="icon-search" />
+                    </div>
                     <div class="icon-grid"></div>
                 </div>
                 <div class="modal-footer">
@@ -95,6 +119,11 @@
     const iconModal = new bootstrap.Modal(iconModalEl);
     const iconGrid = iconModalEl.querySelector('.modal-body .icon-grid');
     const confirmIcon = iconModalEl.querySelector('#confirm-icon');
+    const iconSearch = document.getElementById('icon-search');
+
+    const tagSelect = document.getElementById('tag-select');
+    const addTagButton = document.getElementById('add-tag');
+    const tagContainer = document.getElementById('tag-container');
 
     // Initialise Editor
     const Editor = toastui.Editor;
@@ -108,9 +137,12 @@
     let data = {};
     let template;
 
+    let tags;
+    let activeTags = new Set();
+
     // URL Parameters
     let urlParams = getUrlParams();
-    let noteType = urlParams.get('type') ?? 'characters';
+    let noteType = urlParams.get('type');
     let noteId = urlParams.get('id');
     let isNew = urlParams.get('new');
 
@@ -145,7 +177,7 @@
                             input.value = element;
                         } else if (input && input.type === 'radio') {
                             const radio = metaBody.querySelector(`[name="${key}"][value="${element}"]`);
-                            radio.checked = true;
+                            if (radio) radio.checked = true;
                         }
 
                         if (key === 'icon') {
@@ -160,6 +192,8 @@
                     setupEditor();
                 });
             } else setupEditor();
+
+            setupTags();
         });
     }
 
@@ -226,7 +260,25 @@
                     iconGrid.appendChild(option);
                 });
 
+                iconSearch.addEventListener('input', () => {
+                    let search = iconSearch.value.toLowerCase();
+
+                    iconGrid.querySelectorAll('.icon-option').forEach((icon) => {
+                        let title = icon.title.toLowerCase();
+
+                        if (title.includes(search)) {
+                            icon.hidden = false;
+                        } else {
+                            icon.hidden = true;
+                        }
+                    });
+                });
+
                 loadMetadata();
+
+                iconModalEl.addEventListener('shown.bs.modal', function () {
+                    iconSearch.focus();
+                });
             }
         });
     }
@@ -272,6 +324,13 @@
                 data[key] = value;
             });
 
+            tagContainer.querySelectorAll('.badge').forEach((tag) => {
+                if (!data.tags) data.tags = [];
+
+                let tagId = tags.find((t) => t.label === tag.innerText)._id;
+                data.tags.push(tagId);
+            });
+
             // prettier-ignore
             callService('/content/saveNote', 'POST', (res, xhr) => {
                     if (xhr.status === 200) {
@@ -312,6 +371,66 @@
                 metaBody.querySelector('.icon-title').innerHTML = 'Selected: ' + name;
 
                 iconModal.hide();
+            }
+        });
+
+        addTagButton.addEventListener('click', () => {
+            addTag();
+        });
+    }
+
+    function addTag(selectedTag = null) {
+        if (!selectedTag) selectedTag = tagSelect.value;
+
+        if (selectedTag && !activeTags.has(selectedTag)) {
+            let tag = tags.find((t) => t._id === selectedTag);
+
+            let tagEl = document.createElement('span');
+            tagEl.className = 'badge bg-gradient';
+            tagEl.style.backgroundColor = tag.color;
+            tagEl.style.color = tag.text_color;
+            tagEl.innerText = tag.label;
+            tagEl.title = tag.searchable_value.join(', ');
+
+            let removeButton = document.createElement('i');
+            removeButton.className = 'bx bxs-x-circle';
+            removeButton.style.cursor = 'pointer';
+            removeButton.style.marginLeft = '8px';
+            removeButton.addEventListener('click', () => {
+                tagEl.remove();
+                activeTags.delete(selectedTag);
+                document.querySelector(`option[value="${selectedTag}"]`).disabled = false;
+            });
+
+            tagEl.appendChild(removeButton);
+            activeTags.add(selectedTag);
+            document.querySelector(`option[value="${selectedTag}"]`).disabled = true;
+
+            tagContainer.appendChild(tagEl);
+        }
+    }
+
+    function setupTags() {
+        callService('/content/getTags', 'GET', (res, xhr) => {
+            if (xhr.status !== 200) {
+                console.error('Error loading tags');
+                return;
+            }
+
+            tags = res;
+
+            tags.forEach((tag) => {
+                let option = document.createElement('option');
+                option.value = tag._id;
+                option.innerText = tag.label;
+
+                tagSelect.appendChild(option);
+            });
+
+            if (data.tags) {
+                data.tags.forEach((tag) => {
+                    addTag(tag);
+                });
             }
         });
     }
